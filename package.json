@@ -1,0 +1,30 @@
+{
+  "name": "opencerta-icerta-issuer",
+  "version": "0.1.0",
+  "description": "CLI to demonstrate how iCertas (health certificates) work",
+  "main": "index.js",
+  "repository": "git@github.com:antonimmo/opencerta-icerta-issuer.git",
+  "author": "Antonio <antonimmo@users.noreply.github.com>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "bs58": "^4.0.1",
+    "canvas": "^2.6.1",
+    "commander": "^6.1.0",
+    "jsonld-signatures": "^5.1.0",
+    "node-forge": "^0.10.0",
+    "vc-js": "^0.6.4"
+  },
+  "devDependencies": {
+    "@types/node-forge": "^0.9.5",
+    "@typescript-eslint/eslint-plugin": "^4.1.1",
+    "@typescript-eslint/parser": "^4.1.1",
+    "eslint": "^7.9.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "husky": "^4.3.0",
+    "lint-staged": "^10.4.0",
+    "prettier": "^2.1.2",
+    "typescript": "^4.0.2"
+  }
+}
