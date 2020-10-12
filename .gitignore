@@ -102,3 +102,16 @@ dist
 
 # TernJS port file
 .tern-port
+
+# VS Code
+.vscode
+
+# Generated keys, CSRs and CERTs
+*.pem
+*.key
+*.cnf
+*.csr
+*.cert
+*.crt
+credentials
+keys
