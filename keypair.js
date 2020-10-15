@@ -13,9 +13,13 @@ async function create(keyId) {
 }
 
 function b58topem(b58key, type) {
+  const decoded = bs58.decode(b58key);
+  return buffer2Keytype(decoded, type);
+}
+
+function buffer2Pemtype(buf, type) {
   const header = `-----BEGIN ${type.toUpperCase()} KEY-----\n`;
   const footer = `\n-----END ${type.toUpperCase()} KEY-----\n`;
-  const decoded = bs58.decode(b58key);
   const keyB64 = decoded.toString("base64");
   return header + keyB64 + footer;
 }
@@ -36,4 +40,4 @@ function load(keyId) {
   return { publicKey, privateKey, publicKeyPem, privateKeyPem };
 }
 
-module.exports = { create, b58topem, save, load };
+module.exports = { create, buffer2Pemtype, b58topem, save, load };

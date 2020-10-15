@@ -1,7 +1,7 @@
 const axios = require("axios");
 const fs = require("fs");
 const forge = require("node-forge");
-const { load } = require("./keypair");
+const { load, buffer2Pemtype } = require("./keypair");
 const { buildSignDigitalpenRequest } = require("./builders");
 
 const ORG_NAME = "CLI Demo";
@@ -60,17 +60,19 @@ async function create(csrFile, cmd) {
 
 async function sign(certFile, { csrFile }) {
   try {
-    const csrPem = fs.readFileSync(csrFile);
+    const csrPem = fs.readFileSync(csrFile).toString("ascii");
     // const csr = forge.pki.certificationRequestFromPem(csrPem);
     const req = buildSignDigitalpenRequest(csrPem, ORG_NAME);
+    console.log(req);
     const res = await axios.post(
       `${API_BASE_URL}/certas/v1/signupDigitalpen`,
       req
     );
+    console.log("RESPONSE", res.data);
     var certPem = res.data.cert_pem;
     fs.writeFileSync(certFile, certPem);
   } catch (err) {
-    throw err;
+    throw err.response.data;
   }
 }
 
