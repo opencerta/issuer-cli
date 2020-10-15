@@ -16,22 +16,22 @@ async function create(csrFile, cmd) {
   csr.setSubject([
     {
       name: "commonName",
-      value: cmd.cn,
+      value: cmd.cn
     },
     {
       name: "countryName",
-      value: cmd.country,
+      value: cmd.country
     },
     {
       name: "organizationName",
-      value: cmd.org,
-    },
+      value: cmd.org
+    }
   ]);
 
   // Subject Alternative Names
   const altNames = [
     // 6: URI
-    { type: 6, value: ORG_NAME },
+    { type: 6, value: ORG_NAME }
   ];
   if (cmd.email.length > 0) {
     const emailsAltName = cmd.email.map((e) => {
@@ -45,13 +45,13 @@ async function create(csrFile, cmd) {
       extensions: [
         {
           name: "subjectAltName",
-          altNames: altNames,
-        },
-      ],
-    },
+          altNames: altNames
+        }
+      ]
+    }
   ]);
 
-  csr.sign(key.privateKey);
+  csr.sign(key.privateKey, forge.md.sha256.create());
   console.log("VALID CREATED CSR:", csr.verify());
   var pem = forge.pki.certificationRequestToPem(csr);
   fs.writeFileSync(csrFile, pem);
