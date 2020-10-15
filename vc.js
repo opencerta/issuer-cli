@@ -1,17 +1,21 @@
-const fs = require('fs');
-const forge = require('node-forge');
-const { createCanvas, loadImage } = require('canvas');
+const fs = require("fs");
+const forge = require("node-forge");
+const { createCanvas, loadImage } = require("canvas");
 const {
   RSAKeyPair,
   sign: jsonldsign,
   verify: jsonldverify,
   suites: { RsaSignature2018 },
   purposes: { AssertionProofPurpose }
-} = require('jsonld-signatures');
-const { compareKeys } = require('./csr');
-const { load } = require('./keypair');
-const { newHealthCertificate, addPatientData, addPractitionerData } = require('./healthCertificate');
-const { customLoader } = require('./documentloaders');
+} = require("jsonld-signatures");
+const { compareKeys } = require("./csr");
+const { load } = require("./keypair");
+const {
+  newHealthCertificate,
+  addPatientData,
+  addPractitionerData
+} = require("./healthCertificate");
+const { customLoader } = require("./documentloaders");
 
 async function create(healthCertFile, opts) {
   console.log(opts);
@@ -26,7 +30,7 @@ async function addPatient(healthCertFile, { photo, ...patientData }) {
   const vc = JSON.parse(vcStrIn);
   const img = await loadImage(photo[0]);
   const canvas = createCanvas(img.width, img.height);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   ctx.drawImage(img, 0, 0);
   patientData.photo = [canvas.toDataURL()];
   addPatientData(vc, patientData);
@@ -34,27 +38,34 @@ async function addPatient(healthCertFile, { photo, ...patientData }) {
   fs.writeFileSync(healthCertFile, vcStrOut);
 }
 
-async function sign(healthCertFile, { signingKeyId, issuer, ...practitionerData }) {
+async function sign(
+  healthCertFile,
+  { signingKeyId, issuer, ...practitionerData }
+) {
   const vcStrIn = fs.readFileSync(healthCertFile);
   const vc = JSON.parse(vcStrIn);
   if (vc.proof) {
-    throw new Error('Health certificate has been already signed');
+    throw new Error("Health certificate has been already signed");
   }
   addPractitionerData(vc, practitionerData);
   vc.issuanceDate = new Date().toISOString();
-  vc.issuer = 'https://example.edu/issuers/' + signingKeyId;
+  vc.issuer = "https://example.edu/issuers/" + signingKeyId;
   const certPem = fs.readFileSync(issuer);
   const cert = forge.pki.certificateFromPem(certPem);
   const key = load(signingKeyId);
   if (!compareKeys(key.publicKey, cert.publicKey)) {
-    throw new Error('Supplied key and (issuer) cert key must match');
+    throw new Error("Supplied key and (issuer) cert key must match");
   }
   const keyPair = new RSAKeyPair(key);
   const suite = new RsaSignature2018({
-    verificationMethod: 'https://example.edu/keys/' + signingKeyId,
+    verificationMethod: "https://example.edu/keys/" + signingKeyId,
     key: keyPair
   });
-  const signedVC = await jsonldsign(vc, { suite, documentLoader: customLoader, purpose: new AssertionProofPurpose() });
+  const signedVC = await jsonldsign(vc, {
+    suite,
+    documentLoader: customLoader,
+    purpose: new AssertionProofPurpose()
+  });
   const vcStrOut = JSON.stringify(signedVC, null, 2);
   fs.writeFileSync(healthCertFile, vcStrOut);
 }
@@ -63,7 +74,7 @@ async function validate(healthCertFile, { issuer }) {
   const vcStrIn = fs.readFileSync(healthCertFile);
   const vc = JSON.parse(vcStrIn);
   if (!vc.proof) {
-    throw new Error('Health certificate has not been signed');
+    throw new Error("Health certificate has not been signed");
   }
   const certPem = fs.readFileSync(issuer);
   const cert = forge.pki.certificateFromPem(certPem);
@@ -75,16 +86,20 @@ async function validate(healthCertFile, { issuer }) {
     key: keyPair
   });
   const controller = {
-    '@context': 'https://w3id.org/security/v2',
+    "@context": "https://w3id.org/security/v2",
     publicKey: [keyPair],
     assertionMethod: [keyId]
   };
-  const verifyOpts = { suite, documentLoader: customLoader, purpose: new AssertionProofPurpose({ controller }) };
+  const verifyOpts = {
+    suite,
+    documentLoader: customLoader,
+    purpose: new AssertionProofPurpose({ controller })
+  };
   const result = await jsonldverify(vc, verifyOpts);
   if (result.verified) {
-    console.log('VALID');
+    console.log("VALID");
   } else {
-    console.log('INVALID:', result.error.message);
+    console.log("INVALID:", result.error.message);
   }
 }
 

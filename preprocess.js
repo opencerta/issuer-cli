@@ -1,4 +1,4 @@
-function lowercase(currValue, dummyVal) {
+function lowercase(currValue) {
   return currValue.toLowerCase();
 }
 

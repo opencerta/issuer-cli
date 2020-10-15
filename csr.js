@@ -1,6 +1,12 @@
-const fs = require('fs');
-const forge = require('node-forge');
-const { load } = require('./keypair');
+const axios = require("axios");
+const fs = require("fs");
+const forge = require("node-forge");
+const { load } = require("./keypair");
+const { buildSignDigitalpenRequest } = require("./builders");
+
+const ORG_NAME = "CLI Demo";
+const API_BASE_URL = "https://api.opencerta.org";
+// const API_BASE_URL = "http://localhost:11000";
 
 async function create(csrFile, cmd) {
   const keyId = cmd.keyId;
@@ -9,82 +15,63 @@ async function create(csrFile, cmd) {
   csr.publicKey = key.publicKey;
   csr.setSubject([
     {
-      name: 'commonName',
-      value: cmd.cn
+      name: "commonName",
+      value: cmd.cn,
     },
     {
-      name: 'countryName',
-      value: cmd.country
+      name: "countryName",
+      value: cmd.country,
     },
     {
-      name: 'organizationName',
-      value: cmd.org
-    }
+      name: "organizationName",
+      value: cmd.org,
+    },
   ]);
+
+  // Subject Alternative Names
+  const altNames = [
+    // 6: URI
+    { type: 6, value: ORG_NAME },
+  ];
   if (cmd.email.length > 0) {
     const emailsAltName = cmd.email.map((e) => {
       return { type: 1, value: e };
     });
-    csr.setAttributes([
-      {
-        name: 'extensionRequest',
-        extensions: [
-          {
-            name: 'subjectAltName',
-            altNames: emailsAltName
-          }
-        ]
-      }
-    ]);
+    altNames.push(...emailsAltName);
   }
+  csr.setAttributes([
+    {
+      name: "extensionRequest",
+      extensions: [
+        {
+          name: "subjectAltName",
+          altNames: altNames,
+        },
+      ],
+    },
+  ]);
 
   csr.sign(key.privateKey);
-  console.log('VALID CREATED CSR:', csr.verify());
+  console.log("VALID CREATED CSR:", csr.verify());
   var pem = forge.pki.certificationRequestToPem(csr);
   fs.writeFileSync(csrFile, pem);
-  console.log('SAVED', csrFile);
+  console.log("SAVED", csrFile);
 }
 
-async function sign(certFile, { csrFile, signingKeyId, issuer }) {
-  const signingKey = load(signingKeyId);
-  const csrPem = fs.readFileSync(csrFile);
-  const csr = forge.pki.certificationRequestFromPem(csrPem);
-  let issuerAttrs = csr.subject.attributes;
-
-  if (issuer) {
-    const certPem = fs.readFileSync(issuer);
-    var issuerCert = forge.pki.certificateFromPem(certPem);
-    issuerAttrs = issuerCert.subject.attributes;
+async function sign(certFile, { csrFile }) {
+  try {
+    const csrPem = fs.readFileSync(csrFile);
+    // const csr = forge.pki.certificationRequestFromPem(csrPem);
+    const req = buildSignDigitalpenRequest(csrPem, ORG_NAME);
+    const res = await axios.post(
+      `${API_BASE_URL}/certas/v1/signupDigitalpen`,
+      req
+    );
+    var certPem = res.data.cert_pem;
+    fs.writeFileSync(certFile, certPem);
+  } catch (err) {
+    throw err;
   }
-
-  if (!compareKeys(csr.publicKey, signingKey.publicKey)) {
-    throw new Error('Supplied key and csr (or issuer cert) key must match');
-  }
-
-  const cert = forge.pki.createCertificate();
-  cert.publicKey = csr.publicKey;
-  cert.serialNumber = '01';
-  cert.validity.notBefore = new Date();
-  cert.validity.notAfter = new Date();
-  cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1);
-  cert.setSubject(csr.subject.attributes);
-  cert.setIssuer(issuerAttrs);
-  var extensions = csr.getAttribute({ name: 'extensionRequest' }).extensions;
-  extensions.push.apply(extensions, [
-    {
-      name: 'basicConstraints',
-      cA: true
-    },
-    {
-      name: 'keyUsage',
-      keyCertSign: true,
-      digitalSignature: true
-    }
-  ]);
-  cert.setExtensions(extensions);
-  cert.sign(signingKey.privateKey, forge.md.sha256.create());
-  var certPem = forge.pki.certificateToPem(cert);
-  fs.writeFileSync(certFile, certPem);
 }
 
 function compareKeys(k1, k2) {
