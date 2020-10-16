@@ -50,11 +50,11 @@ creates a RSA key pair under the folder `keys/keyId`.
 
 3.2. Add Patient data to certificate
 
-`node index.js vc patient --givenName First --familyName Last --photo samplepictures/patient.png --gender male --birthDate 1977-09-10 immunization.json`
+`node index.js vc patient --givenName First --familyName Last --photo samplepictures/patient1.jpg --gender male --birthDate 1977-09-10 immunization.json`
 
 At least one photo is required. To add more photos, add as many `photos <fileName>` as necessary:
 
-`node index.js vc patient --givenName First --familyName Last --photo samplepictures/patient.png --photo photo2.jpg --photo anotherphoto.png --gender male --birthDate 1977-09-10 immunization.json`
+`node index.js vc patient --givenName First --familyName Last --photo samplepictures/patient1.jpg --photo photo2.jpg --photo anotherphoto.png --gender male --birthDate 1977-09-10 immunization.json`
 
 Calling `node index.js vc patient` several times for the same file will add more patients, but won't be referenced anywhere else within the document. Future versions might handle this behaviour properly.
 
