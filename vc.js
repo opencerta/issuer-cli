@@ -6,22 +6,21 @@ const {
   sign: jsonldsign,
   verify: jsonldverify,
   suites: { RsaSignature2018 },
-  purposes: { AssertionProofPurpose }
+  purposes: { AssertionProofPurpose },
 } = require("jsonld-signatures");
 const { compareKeys } = require("./csr");
 const { load } = require("./keypair");
 const {
   newHealthCertificate,
   addPatientData,
-  addPractitionerData
+  addPractitionerData,
 } = require("./healthCertificate");
 const { customLoader } = require("./documentloaders");
 
 async function create(healthCertFile, opts) {
-  console.log(opts);
+  // console.log(opts);
   const vc = newHealthCertificate(opts);
   const vcStr = JSON.stringify(vc, null, 2);
-  console.log(healthCertFile);
   fs.writeFileSync(healthCertFile, vcStr);
 }
 
@@ -40,31 +39,37 @@ async function addPatient(healthCertFile, { photo, ...patientData }) {
 
 async function sign(
   healthCertFile,
-  { signingKeyId, issuer, ...practitionerData }
+  { signingKeyName, issuer, ...practitionerData }
 ) {
   const vcStrIn = fs.readFileSync(healthCertFile);
   const vc = JSON.parse(vcStrIn);
   if (vc.proof) {
     throw new Error("Health certificate has been already signed");
   }
+  const key = load(signingKeyName);
   addPractitionerData(vc, practitionerData);
-  vc.issuanceDate = new Date().toISOString();
-  vc.issuer = "https://example.edu/issuers/" + signingKeyId;
+
   const certPem = fs.readFileSync(issuer);
   const cert = forge.pki.certificateFromPem(certPem);
-  const key = load(signingKeyId);
+  const serialNbr = cert.serialNumber;
+  const subjKeyId = cert.getExtension({
+    name: "subjectKeyIdentifier",
+  }).subjectKeyIdentifier;
+  vc.issuanceDate = new Date().toISOString();
+  vc.issuer = `https://example.edu/issuers/${serialNbr}/${subjKeyId}`;
+
   if (!compareKeys(key.publicKey, cert.publicKey)) {
     throw new Error("Supplied key and (issuer) cert key must match");
   }
   const keyPair = new RSAKeyPair(key);
   const suite = new RsaSignature2018({
-    verificationMethod: "https://example.edu/keys/" + signingKeyId,
-    key: keyPair
+    verificationMethod: vc.issuer,
+    key: keyPair,
   });
   const signedVC = await jsonldsign(vc, {
     suite,
     documentLoader: customLoader,
-    purpose: new AssertionProofPurpose()
+    purpose: new AssertionProofPurpose(),
   });
   const vcStrOut = JSON.stringify(signedVC, null, 2);
   fs.writeFileSync(healthCertFile, vcStrOut);
@@ -78,28 +83,30 @@ async function validate(healthCertFile, { issuer }) {
   }
   const certPem = fs.readFileSync(issuer);
   const cert = forge.pki.certificateFromPem(certPem);
-  const keyId = vc.proof.verificationMethod;
   const key = { publicKeyPem: forge.pki.publicKeyToPem(cert.publicKey) };
+  const keyId = vc.proof.verificationMethod;
+  // console.log("LDKEY", key);
   const keyPair = new RSAKeyPair({ id: keyId, ...key });
   const suite = new RsaSignature2018({
     verificationMethod: keyId,
-    key: keyPair
+    key: keyPair,
   });
   const controller = {
     "@context": "https://w3id.org/security/v2",
     publicKey: [keyPair],
-    assertionMethod: [keyId]
+    assertionMethod: [keyId],
   };
   const verifyOpts = {
     suite,
     documentLoader: customLoader,
-    purpose: new AssertionProofPurpose({ controller })
+    purpose: new AssertionProofPurpose({ controller }),
   };
+  // console.log("VERIFYOPTS", verifyOpts);
   const result = await jsonldverify(vc, verifyOpts);
   if (result.verified) {
     console.log("VALID");
   } else {
-    console.log("INVALID:", result.error.message);
+    console.log("INVALID:", result.error.errors);
   }
 }
 

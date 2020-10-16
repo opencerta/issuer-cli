@@ -1,7 +1,7 @@
 const axios = require("axios");
 const fs = require("fs");
 const forge = require("node-forge");
-const { load, buffer2Pemtype } = require("./keypair");
+const { load } = require("./keypair");
 const { buildSignDigitalpenRequest } = require("./builders");
 
 const ORG_NAME = "CLI Demo";
@@ -9,8 +9,8 @@ const API_BASE_URL = "https://api.opencerta.org";
 // const API_BASE_URL = "http://localhost:11000";
 
 async function create(csrFile, cmd) {
-  const keyId = cmd.keyId;
-  const key = load(keyId);
+  const keyName = cmd.keyName;
+  const key = load(keyName);
   const csr = forge.pki.createCertificationRequest();
   csr.publicKey = key.publicKey;
   csr.setSubject([
@@ -63,15 +63,16 @@ async function sign(certFile, { csrFile }) {
     const csrPem = fs.readFileSync(csrFile).toString("ascii");
     // const csr = forge.pki.certificationRequestFromPem(csrPem);
     const req = buildSignDigitalpenRequest(csrPem, ORG_NAME);
-    console.log(req);
+    // console.log(req);
     const res = await axios.post(
       `${API_BASE_URL}/certas/v1/signupDigitalpen`,
       req
     );
-    console.log("RESPONSE", res.data);
     var certPem = res.data.cert_pem;
+    console.log("CERTIFICATE", certPem);
     fs.writeFileSync(certFile, certPem);
   } catch (err) {
+    console.log(err.response);
     throw err.response.data;
   }
 }

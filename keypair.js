@@ -3,13 +3,13 @@ const bs58 = require("bs58");
 const forge = require("node-forge");
 const { RSAKeyPair } = require("jsonld-signatures");
 
-async function create(keyId) {
+async function create(keyName) {
   const rsa = await RSAKeyPair.generate();
   const key = {
     privateKeyPem: rsa.privateKeyPem,
-    publicKeyPem: rsa.publicKeyPem
+    publicKeyPem: rsa.publicKeyPem,
   };
-  save(key, keyId);
+  save(key, keyName);
 }
 
 function b58topem(b58key, type) {
@@ -24,15 +24,15 @@ function buffer2Pemtype(buf, type) {
   return header + keyB64 + footer;
 }
 
-function save(key, keyId) {
-  const keyDir = "./keys/" + keyId;
+function save(key, keyName) {
+  const keyDir = "./keys/" + keyName;
   fs.mkdirSync(keyDir, { recursive: true });
   fs.writeFileSync(keyDir + "/private.pem", key.privateKeyPem);
   fs.writeFileSync(keyDir + "/public.pem", key.publicKeyPem);
 }
 
-function load(keyId) {
-  const keyDir = "./keys/" + keyId;
+function load(keyName) {
+  const keyDir = "./keys/" + keyName;
   const publicKeyPem = fs.readFileSync(keyDir + "/public.pem");
   const privateKeyPem = fs.readFileSync(keyDir + "/private.pem");
   const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);

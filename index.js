@@ -9,7 +9,7 @@ cli.version("0.0.1");
 
 // Key creation
 cli
-  .command("keypair <id>")
+  .command("keypair <name>")
   .alias("key")
   .description("Create public and private signing key pair")
   .action(keypair.create);
@@ -19,7 +19,7 @@ cli
   .command("certification-request <csrFile>")
   .alias("csr")
   .description("Create CSR")
-  .requiredOption("--keyId <id>", "Key File")
+  .requiredOption("--keyName <keyName>", "Key File")
   .requiredOption("--cn <commonName>", "Common Name")
   .requiredOption("--org <organization>", "Organization")
   .requiredOption("--country <country>", "Country")
@@ -66,7 +66,7 @@ vcCommand
 
 vcCommand
   .command("sign <healthCertFile>")
-  .requiredOption("--signingKeyId <id>", "Key to sign with")
+  .requiredOption("--signingKeyName <keyName>", "Key to sign with")
   .requiredOption("--givenName <givenName>", "Patient first name")
   .requiredOption("--familyName <familyName>", "Patient last name")
   .option("--prefix <prefix>", "Practitioner prefix (eg. Dr., Mrs.)")
