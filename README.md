@@ -23,21 +23,21 @@ Commands:
 
 1. Create a RSA key pair
 
-`node index.js keypair keyId`
+`node index.js keypair keyName`
 
-creates a RSA key pair under the folder `keys/keyId`.
+creates a RSA key pair (private.pem, public.pem) under the folder `keys/keyName`.
 
 
 2. Create a X509 certificate
 
 2.1. Create Certification Request (CSR)
 
-`node index.js csr --keyId keyId --cn 'Practitioner Name' --org 'Organization Name' --country US --email practitioner@lab.organization.com csrFile.csr`
+`node index.js csr --keynName keyName --cn 'Practitioner Name' --org 'Organization Name' --country US --email practitioner@lab.organization.com csrFile.csr`
 
 
 2.2. Create Certificate from CSR
 
-`node index.js cert --csrFile csrFile.csr --signingKeyId keyId certificate.cert`
+`node index.js cert --csrFile csrFile.csr certificate.cert`
 
 
 3. Create Health certificate (VC: Verifiable credential)
@@ -52,7 +52,7 @@ creates a RSA key pair under the folder `keys/keyId`.
 
 `node index.js vc patient --givenName First --familyName Last --photo samplepictures/patient1.jpg --gender male --birthDate 1977-09-10 immunization.json`
 
-At least one photo is required. To add more photos, add as many `photos <fileName>` as necessary:
+At least one photo is required. To add more photos, add as many `--photos <fileName>` as necessary:
 
 `node index.js vc patient --givenName First --familyName Last --photo samplepictures/patient1.jpg --photo photo2.jpg --photo anotherphoto.png --gender male --birthDate 1977-09-10 immunization.json`
 
@@ -61,7 +61,7 @@ Calling `node index.js vc patient` several times for the same file will add more
 
 3.3. Add practitioner data and sign
 
-`node index.js vc sign --signingKeyId keyId --givenName PractitionerFirst --familiyName PractitionerLast --prefix Dr. --issuer certificate.cert immunization.json`
+`node index.js vc sign --signingKeyName keyName --givenName PractitionerFirst --familyName PractitionerLast --prefix Dr. --issuer certificate.cert immunization.json`
 
 
 4. (Optional): Validate signature with X509 certificate file public key
