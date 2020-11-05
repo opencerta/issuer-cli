@@ -32,7 +32,7 @@ creates a RSA key pair (private.pem, public.pem) under the folder `keys/keyName`
 
 2.1. Create Certification Request (CSR)
 
-`node index.js csr --keynName keyName --cn 'Practitioner Name' --org 'Organization Name' --country US --email practitioner@lab.organization.com csrFile.csr`
+`node index.js csr --keyName keyName --cn 'Practitioner Name' --org 'Organization Name' --country US --email practitioner@lab.organization.com csrFile.csr`
 
 
 2.2. Create Certificate from CSR
