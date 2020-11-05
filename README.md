@@ -67,3 +67,9 @@ Calling `node index.js vc patient` several times for the same file will add more
 4. (Optional): Validate signature with X509 certificate file public key
 
 `node index.js vc validate --issuer certificate.cert immunization.json`
+
+## License
+
+The @opencerta/issuer-cli code is licensed under the
+[GNU Lesser GeneralPublic License v3.0](https://www.gnu.org/licenses/lgpl-3.0.en.html),
+also included in this repository in the `COPYING.LESSER` file.
